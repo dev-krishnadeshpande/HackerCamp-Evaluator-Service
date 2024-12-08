@@ -3,13 +3,13 @@ const { createBullBoard } = require("@bull-board/api");
 const { BullMQAdapter } = require("@bull-board/api/bullMQAdapter");
 const { ExpressAdapter } = require("@bull-board/express");
 
-import sampleQueue from "../queue/sampleQueue";
+import submissionQueue from "../queues/submissionQueue";
 
 const serverAdapter = new ExpressAdapter();
 serverAdapter.setBasePath("/admin/queues");
 
 createBullBoard({
-  queues: [new BullMQAdapter(sampleQueue)],
+  queues: [new BullMQAdapter(submissionQueue)],
   serverAdapter: serverAdapter,
 });
 

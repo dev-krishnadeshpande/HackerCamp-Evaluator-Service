@@ -11,8 +11,11 @@ export default function SampleWorker(queueName: string) {
         const sampleJob = new SampleJob(job.data);
         console.log(job?.data, job?.name, job?.id);
         sampleJob.handle();
+      } else if (job.name === "SubmissionJob") {
+        const sampleJob = new SampleJob(job.data);
+        console.log(job?.data, job?.name, job?.id);
+        sampleJob.handle();
       }
-
       return true;
     },
     { connection: redisConnection }

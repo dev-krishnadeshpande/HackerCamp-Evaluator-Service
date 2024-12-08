@@ -12,8 +12,7 @@ export default class SampleJob implements IJob {
   }
 
   handle = () => {
-    console.log("hanlder");
-    console.log(this.payload);
+    console.log("handler", this.payload);
   };
 
   failed = (job?: Job) => {
