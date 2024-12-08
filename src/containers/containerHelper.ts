@@ -7,7 +7,7 @@ import { DOCKER_STREAM_HEADER_SIZE } from "../utils/constants";
 const docker = new Docker();
 
 export async function createContainer(options: DockerodeOptions) {
-  const container = docker.createContainer(options);
+  const container = await docker.createContainer(options);
 
   return container;
 }
@@ -18,17 +18,11 @@ export async function getDecodedStream(
   const rawLogBuffer: Buffer[] = [];
 
   return new Promise((res, rej) => {
-    const timeout = setTimeout(() => {
-      console.log("Timeout called");
-      rej("TLE");
-    }, 2000);
-
     logStream.on("data", (chunk) => {
       rawLogBuffer.push(chunk);
     });
 
     logStream.on("end", () => {
-      clearTimeout(timeout);
       const completeBuffer = Buffer.concat(rawLogBuffer);
       const decodedStream = decodeDockerStream(completeBuffer);
 

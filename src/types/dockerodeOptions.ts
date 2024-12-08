@@ -5,4 +5,5 @@ export interface DockerodeOptions {
   AttachStderr?: boolean;
   Tty: boolean;
   Cmd: string[];
+  WorkingDir?: string;
 }
