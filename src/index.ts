@@ -2,7 +2,7 @@ import express, { Express } from "express";
 
 import serverAdapter from "./config/bullboardConfig";
 import apiRouter from "./routes";
-import SampleWorker from "./worker/sampleWorker";
+import SubmissionWorker from "./worker/submissionWorker";
 
 const app: Express = express();
 
@@ -11,7 +11,7 @@ app.use("/admin/queues", serverAdapter.getRouter());
 
 app.listen(4040, async () => {
   try {
-    SampleWorker("SubmissionQueue");
+    SubmissionWorker("SubmissionQueue");
 
     console.log(`Server started at *:4040`);
   } catch (error) {
