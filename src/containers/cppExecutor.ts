@@ -4,7 +4,13 @@ import tar from "tar-stream";
 import { DockerodeOptions } from "../types/dockerodeOptions";
 import { createContainer, getDecodedStream } from "./containerHelper";
 
-async function runCppCode(cppCode: string) {
+async function cppExecutor(
+  code: string,
+  inputTestCase: string,
+  outputTestCase: string
+) {
+  console.log(inputTestCase, outputTestCase);
+
   const containerOptions: DockerodeOptions = {
     Image: "gcc",
     AttachStdin: false,
@@ -37,10 +43,9 @@ async function runCppCode(cppCode: string) {
   });
 
   await exec.start({}); // Provide required options
-  console.log("Directory created in container!");
 
   // Push the C++ code into the container
-  await pushCppCodeToContainer(container, cppCode);
+  await pushCppCodeToContainer(container, code);
 
   // Attach to the container's output
   const logStream = await container.logs({
@@ -51,7 +56,6 @@ async function runCppCode(cppCode: string) {
 
   try {
     const codeResponse: string = await getDecodedStream(logStream);
-    console.log("codeResponse", codeResponse);
 
     return { output: codeResponse, status: "COMPLETED" };
   } catch (error) {
@@ -79,7 +83,6 @@ async function pushCppCodeToContainer(
   // });
 
   // const stream = await exec.start({ hijack: true, stdin: false }); // Provide required options
-  // console.log(stream);
 
   // Push the archive to the container's working directory
   await container.putArchive(pack, { path: "/workspace" });
@@ -93,7 +96,6 @@ async function pushCppCodeToContainer(
 
   const compileStream = await compileExec.start({});
   compileStream.pipe(process.stdout);
-  console.log("C++ code compiled.");
 
   // Step 4: Run the compiled program
   const runExec = await container.exec({
@@ -104,7 +106,6 @@ async function pushCppCodeToContainer(
 
   const runStream = await runExec.start({});
   runStream.pipe(process.stdout);
-  console.log("C++ program executed.");
 }
 
-export default runCppCode;
+export default cppExecutor;
