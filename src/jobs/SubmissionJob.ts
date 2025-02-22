@@ -1,12 +1,14 @@
 import { Job } from "bullmq";
 
-import runCppCode from "../containers/cppContainer";
-import runJavaScriptCode from "../containers/javascriptContainer";
+import cppExecutor from "../containers/cppExecutor";
+import javascriptExecutor from "../containers/javascriptExecutor";
+import evaluationQueueProducer from "../producers/evaluationQueueProducer";
 import { IJob } from "../types/bullMqJobDefinition";
 import {
   CODE_LANGUAGE_CPP,
   CODE_LANGUAGE_JAVASCRIPT,
 } from "../utils/constants";
+import formatInputTestcaseString from "../utils/formatInputTestcaseString";
 
 export default class SubmissionJob implements IJob {
   name: string;
@@ -18,19 +20,65 @@ export default class SubmissionJob implements IJob {
   }
 
   handle = async () => {
-    const language = this.payload?.language;
-    if (language === CODE_LANGUAGE_JAVASCRIPT) {
-      const code = this.payload?.code;
-      const response = await runJavaScriptCode(code as string);
-      console.log("response", response);
-    } else if (language === CODE_LANGUAGE_CPP) {
-      const code = this.payload?.code;
-      const response = await runCppCode(code as string);
-      console.log("response", response);
+    if (this.payload) {
+      const key = Object.keys(this.payload)[0];
+      const {
+        submissionId,
+        userId,
+        language: codeLanguage,
+        code,
+        testCases,
+      } = this.payload[key] as {
+        submissionId: string;
+        userId: string;
+        language: string;
+        code: string;
+        testCases: { testCaseId: string; input: string; output: string }[];
+      };
+
+      //Test cases
+      const responses = testCases.map(
+        async (testCase: {
+          testCaseId: string;
+          input: string;
+          output: string;
+        }) => {
+          const testCaseId = testCase.testCaseId;
+          const inputTestCase = testCase.input;
+          const outputTestCase = testCase.output;
+          const formattedInputTestCase =
+            formatInputTestcaseString(inputTestCase);
+
+          if (
+            codeLanguage?.toLowerCase() ===
+            CODE_LANGUAGE_JAVASCRIPT.toLowerCase()
+          ) {
+            return javascriptExecutor(
+              code as string,
+              testCaseId,
+              formattedInputTestCase,
+              outputTestCase
+            );
+          } else if (
+            codeLanguage?.toLowerCase() === CODE_LANGUAGE_CPP.toLowerCase()
+          ) {
+            //TODO: Add changes for cppExecutor
+            return await cppExecutor(
+              code as string,
+              formattedInputTestCase,
+              outputTestCase
+            );
+          }
+        }
+      );
+      const responsesArr = await Promise.all(responses);
+      console.log(responsesArr);
+
+      evaluationQueueProducer({ response: responsesArr, submissionId, userId });
     }
   };
 
   failed = (job?: Job) => {
-    console.log("Job failed, Id: ", job?.id);
+    console.error("Job failed, Id: ", job?.id);
   };
 }
