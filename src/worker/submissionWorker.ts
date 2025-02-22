@@ -2,14 +2,14 @@ import { Job, Worker } from "bullmq";
 
 import redisConnection from "../config/redisConfig";
 import SubmissionJob from "../jobs/SubmissionJob";
+import { SUBMISSION_JOB } from "../utils/constants";
 
 export default function SubmissionWorker(queueName: string) {
   new Worker(
     queueName,
     async (job: Job) => {
-      if (job.name === "SubmissionJob") {
+      if (job.name === SUBMISSION_JOB) {
         const submissionJob = new SubmissionJob(job.data);
-        console.log(job?.data, job?.name, job?.id);
         submissionJob.handle();
       }
       return true;
